@@ -422,19 +422,6 @@ public class StarterCodeGenVisitor implements ASTVisitor, Opcodes {
 			}
 		}
 
-		Label beginNameDef = new Label();
-		mv.visitLabel(beginNameDef);
-		MethodVisitorLocalVarTable context = new MethodVisitorLocalVarTable(mv, listOfLocalVar);
-
-		Label endNameDef = new Label();
-		mv.visitLabel(endNameDef);
-
-		addLocals(context, beginNameDef, endNameDef);
-		mv.visitMaxs(0, 0);
-
-		// terminate construction of method
-		mv.visitEnd();
-
 		return null;
 	}
 
