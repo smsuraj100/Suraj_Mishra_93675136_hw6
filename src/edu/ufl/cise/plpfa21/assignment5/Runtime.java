@@ -19,7 +19,7 @@ public class Runtime {
 	}
 	
 	public static int division(int num1, int num2) {
-		if (num2 == 0) {			
+		if (num2 != 0) {			
 			return num1 / num2;		
 		} else {
 			return 0;
@@ -55,11 +55,11 @@ public class Runtime {
 	}
 	
 	public static boolean isStringGreater(String str1, String str2) {
-		return str1.compareTo(str2) > 0 ? true : false;
+		return str1.startsWith(str2);
 	}
 	
 	public static boolean isStringLesser(String str1, String str2) {
-		return str1.compareTo(str2) > 0 ? false : true;
+		return str2.startsWith(str1);
 	}
 	
 	public static boolean isBoolEquals(boolean bool1, boolean bool2) {

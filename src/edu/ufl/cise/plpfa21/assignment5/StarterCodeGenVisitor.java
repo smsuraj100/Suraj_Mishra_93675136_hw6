@@ -305,7 +305,8 @@ public class StarterCodeGenVisitor implements ASTVisitor, Opcodes {
 	@Override
 	public Object visitIIdentExpression(IIdentExpression n, Object arg) throws Exception {
 		MethodVisitor mv = ((MethodVisitorLocalVarTable) arg).mv();
-		int idenSlot = n.getName().getSlot();
+//		int idenSlot = n.getName().getSlot();
+		
 		String idenName = n.getText();
 
 		if (n.getName().getDec() instanceof IMutableGlobal || n.getName().getDec() instanceof IImmutableGlobal) {
@@ -317,10 +318,11 @@ public class StarterCodeGenVisitor implements ASTVisitor, Opcodes {
 				mv.visitFieldInsn(GETSTATIC, className, idenName, stringDesc);
 			}
 		} else {
+			int idenSlot = ((INameDef)n.getName().getDec()).getIdent().getSlot();
 			if (n.getType().isKind(TypeKind.INT) || n.getType().isKind(TypeKind.BOOLEAN)) {
-				mv.visitVarInsn(ISTORE, idenSlot);
+				mv.visitVarInsn(ILOAD, idenSlot);
 			} else if (n.getType().isKind(TypeKind.STRING)) {
-				mv.visitVarInsn(ASTORE, idenSlot);
+				mv.visitVarInsn(ALOAD, idenSlot);
 			}
 		}
 
@@ -565,7 +567,7 @@ public class StarterCodeGenVisitor implements ASTVisitor, Opcodes {
 		INameDef nameDef = n.getVarDef();
 		String varName = nameDef.getIdent().getName();
 		String typeDesc = nameDef.getType().getDesc();
-		FieldVisitor fieldVisitor = cw.visitField(ACC_PUBLIC | ACC_STATIC | ACC_FINAL, varName, typeDesc, null, null);
+		FieldVisitor fieldVisitor = cw.visitField(ACC_PUBLIC | ACC_STATIC , varName, typeDesc, null, null);
 		fieldVisitor.visitEnd();
 		// generate code to initialize field.
 		IExpression e = n.getExpression();
