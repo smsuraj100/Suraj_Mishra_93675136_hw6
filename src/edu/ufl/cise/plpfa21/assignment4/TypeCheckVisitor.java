@@ -508,6 +508,10 @@ public class TypeCheckVisitor implements ASTVisitor {
 		String name = n.getName();
 		IDeclaration dec = symtab.lookupDec(name);
 		check(dec != null, n, "identifier not declared");
+		/*
+		 * Setting Declaration for assignment 6
+		 */
+		n.setDec(dec);
 		return dec;
 	}
 

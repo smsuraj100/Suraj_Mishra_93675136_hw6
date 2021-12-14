@@ -279,7 +279,27 @@ public class StarterCodeGenVisitor implements ASTVisitor, Opcodes {
 
 	@Override
 	public Object visitIFunctionCallExpression(IFunctionCallExpression n, Object arg) throws Exception {
-		throw new UnsupportedOperationException("TO IMPLEMENT");
+		MethodVisitor mv = ((MethodVisitorLocalVarTable) arg).mv();
+		String funcName = n.getName().getName();
+		List<IExpression> args = n.getArgs();
+		String desc = "";
+		
+		// Iterate over the parameter list and build the function descriptor
+		StringBuilder sb = new StringBuilder();
+		sb.append("(");
+		for (IExpression exp : args) {
+			desc = exp.getType().getDesc();
+			sb.append(desc);
+		}
+		sb.append(")");
+		
+		IType funcReturnType = ((IFunctionDeclaration)n.getName().getDec()).getResultType();
+		sb.append(funcReturnType.getDesc());
+		
+		desc = sb.toString();
+		mv.visitMethodInsn(INVOKESTATIC, className, funcName, desc, false);
+		
+		return null;
 	}
 
 	@Override
