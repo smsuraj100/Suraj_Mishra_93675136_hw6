@@ -206,8 +206,10 @@ public class TypeCheckVisitor implements ASTVisitor {
 		
 		symtab.enterScope();
 		
-		IType tempType = unifyAndCheck(nameDef.getType(), expType, n);
-		nameDef.setType(tempType);
+		//IType tempType = unifyAndCheck(nameDef.getType(), expType, n);
+		//nameDef.setType(tempType);
+		
+		nameDef.setType(expType);
 		IBlock block = n.getBlock();
 		block.visit(this, arg);
 		

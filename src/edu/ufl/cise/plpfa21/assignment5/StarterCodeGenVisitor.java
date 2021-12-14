@@ -283,30 +283,30 @@ public class StarterCodeGenVisitor implements ASTVisitor, Opcodes {
 		String funcName = n.getName().getName();
 		List<IExpression> args = n.getArgs();
 		String desc = "";
-		
+
 		// Iterate over the parameter list and build the function descriptor
 		StringBuilder sb = new StringBuilder();
 		sb.append("(");
 		for (IExpression exp : args) {
+			exp.visit(this, arg);
 			desc = exp.getType().getDesc();
 			sb.append(desc);
 		}
 		sb.append(")");
-		
-		IType funcReturnType = ((IFunctionDeclaration)n.getName().getDec()).getResultType();
+
+		IType funcReturnType = ((IFunctionDeclaration) n.getName().getDec()).getResultType();
 		sb.append(funcReturnType.getDesc());
-		
+
 		desc = sb.toString();
 		mv.visitMethodInsn(INVOKESTATIC, className, funcName, desc, false);
-		
+
 		return null;
 	}
 
 	@Override
 	public Object visitIIdentExpression(IIdentExpression n, Object arg) throws Exception {
 		MethodVisitor mv = ((MethodVisitorLocalVarTable) arg).mv();
-//		int idenSlot = n.getName().getSlot();
-		
+
 		String idenName = n.getText();
 
 		if (n.getName().getDec() instanceof IMutableGlobal || n.getName().getDec() instanceof IImmutableGlobal) {
@@ -318,7 +318,7 @@ public class StarterCodeGenVisitor implements ASTVisitor, Opcodes {
 				mv.visitFieldInsn(GETSTATIC, className, idenName, stringDesc);
 			}
 		} else {
-			int idenSlot = ((INameDef)n.getName().getDec()).getIdent().getSlot();
+			int idenSlot = ((INameDef) n.getName().getDec()).getIdent().getSlot();
 			if (n.getType().isKind(TypeKind.INT) || n.getType().isKind(TypeKind.BOOLEAN)) {
 				mv.visitVarInsn(ILOAD, idenSlot);
 			} else if (n.getType().isKind(TypeKind.STRING)) {
@@ -373,7 +373,25 @@ public class StarterCodeGenVisitor implements ASTVisitor, Opcodes {
 
 	@Override
 	public Object visitILetStatement(ILetStatement n, Object arg) throws Exception {
-		throw new UnsupportedOperationException("TO IMPLEMENT");
+		MethodVisitor mv = ((MethodVisitorLocalVarTable) arg).mv;
+		IExpression exp = n.getExpression();
+		IType expType = exp.getType();
+
+		n.getLocalDef().visit(this, arg);
+
+		if (exp != null) {
+			int slot = n.getLocalDef().getIdent().getSlot();
+			exp.visit(this, arg);
+			if (expType.isInt() || expType.isBoolean()) {
+				mv.visitVarInsn(ISTORE, slot);
+			} else {
+				mv.visitVarInsn(ASTORE, slot);
+			}
+		}
+
+		n.getBlock().visit(this, arg);
+
+		return null;
 	}
 
 	@Override
@@ -388,38 +406,35 @@ public class StarterCodeGenVisitor implements ASTVisitor, Opcodes {
 
 	@Override
 	public Object visitINameDef(INameDef n, Object arg) throws Exception {
-		MethodVisitor mv = ((MethodVisitorLocalVarTable)arg).mv;
+		MethodVisitor mv = ((MethodVisitorLocalVarTable) arg).mv;
 		IIdentifier nameDefIden = n.getIdent();
 		IDeclaration nameDefDec = nameDefIden.getDec();
-		
-		
-		List<LocalVarInfo> listOfLocalVar = ((MethodVisitorLocalVarTable)arg).localVars;
-		
-		if(!(nameDefDec instanceof IMutableGlobal || nameDefDec instanceof IImmutableGlobal)) {
+
+		List<LocalVarInfo> listOfLocalVar = ((MethodVisitorLocalVarTable) arg).localVars;
+
+		if (!(nameDefDec instanceof IMutableGlobal || nameDefDec instanceof IImmutableGlobal)) {
 			nameDefIden.setSlot(listOfLocalVar.size());
-			
-			if(n.getType().isInt() || n.getType().isBoolean()) {
+
+			if (n.getType().isInt() || n.getType().isBoolean()) {
 				listOfLocalVar.add(new LocalVarInfo(nameDefIden.getName(), "I", null, null));
-			}
-			else if(n.getType().isString()) {				
+			} else if (n.getType().isString()) {
 				listOfLocalVar.add(new LocalVarInfo(nameDefIden.getName(), stringDesc, null, null));
 			}
 		}
-		
-		
+
 		Label beginNameDef = new Label();
 		mv.visitLabel(beginNameDef);
 		MethodVisitorLocalVarTable context = new MethodVisitorLocalVarTable(mv, listOfLocalVar);
-		
+
 		Label endNameDef = new Label();
 		mv.visitLabel(endNameDef);
-		
+
 		addLocals(context, beginNameDef, endNameDef);
 		mv.visitMaxs(0, 0);
-		
-		//terminate construction of method
+
+		// terminate construction of method
 		mv.visitEnd();
-		
+
 		return null;
 	}
 
@@ -545,19 +560,19 @@ public class StarterCodeGenVisitor implements ASTVisitor, Opcodes {
 
 	@Override
 	public Object visitIWhileStatement(IWhileStatement n, Object arg) throws Exception {
-		MethodVisitor mv = ((MethodVisitorLocalVarTable)arg).mv;
+		MethodVisitor mv = ((MethodVisitorLocalVarTable) arg).mv;
 		IExpression exp = n.getGuardExpression();
-		
+
 		Label lbl1 = new Label();
 		mv.visitJumpInsn(GOTO, lbl1);
-		
+
 		Label lbl2 = new Label();
 		mv.visitLabel(lbl2);
 		n.getBlock().visit(this, arg);
 		mv.visitLabel(lbl1);
 		exp.visit(this, arg);
 		mv.visitJumpInsn(IFNE, lbl2);
-		
+
 		return null;
 	}
 
@@ -567,7 +582,7 @@ public class StarterCodeGenVisitor implements ASTVisitor, Opcodes {
 		INameDef nameDef = n.getVarDef();
 		String varName = nameDef.getIdent().getName();
 		String typeDesc = nameDef.getType().getDesc();
-		FieldVisitor fieldVisitor = cw.visitField(ACC_PUBLIC | ACC_STATIC , varName, typeDesc, null, null);
+		FieldVisitor fieldVisitor = cw.visitField(ACC_PUBLIC | ACC_STATIC, varName, typeDesc, null, null);
 		fieldVisitor.visitEnd();
 		// generate code to initialize field.
 		IExpression e = n.getExpression();
